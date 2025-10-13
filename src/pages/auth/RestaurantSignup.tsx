@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Store, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import ImageUpload from '@/components/ImageUpload';
 
 const restaurantSignupSchema = z.object({
   restaurantName: z.string().min(2, 'Restaurant name must be at least 2 characters'),
@@ -37,7 +38,8 @@ const RestaurantSignup = () => {
     fssaiNumber: '',
     gstNumber: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    image_url: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -93,7 +95,8 @@ const RestaurantSignup = () => {
           restaurant_name: formData.restaurantName,
           category: formData.category,
           fssai_number: formData.fssaiNumber,
-          gst_number: formData.gstNumber
+          gst_number: formData.gstNumber,
+          image_url: formData.image_url
         }
       );
 
@@ -244,6 +247,13 @@ const RestaurantSignup = () => {
                 />
               </div>
             </div>
+
+            <ImageUpload
+              onImageUpload={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+              currentImage={formData.image_url}
+              label="Restaurant Photo (Optional)"
+              maxSize={10}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

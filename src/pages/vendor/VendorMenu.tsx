@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Store, Plus, Edit, Trash2, LogOut, Package, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import ImageUpload from '@/components/ImageUpload';
 
 interface MenuItem {
   id: string;
@@ -31,6 +32,7 @@ interface Restaurant {
   name: string;
   is_active: boolean;
   is_approved: boolean;
+  image_url?: string;
 }
 
 const VendorMenu = () => {
@@ -46,7 +48,8 @@ const VendorMenu = () => {
     price: '',
     category: '',
     is_vegetarian: false,
-    preparation_time: 30
+    preparation_time: 30,
+    image_url: ''
   });
 
   const categories = [
@@ -170,7 +173,8 @@ const VendorMenu = () => {
           category: newItem.category,
           is_vegetarian: newItem.is_vegetarian,
           preparation_time: newItem.preparation_time,
-          is_available: true
+          is_available: true,
+          image_url: newItem.image_url || null
         })
         .select()
         .single();
@@ -184,7 +188,8 @@ const VendorMenu = () => {
         price: '',
         category: '',
         is_vegetarian: false,
-        preparation_time: 30
+        preparation_time: 30,
+        image_url: ''
       });
       setIsAddDialogOpen(false);
 
@@ -305,6 +310,45 @@ const VendorMenu = () => {
           </CardHeader>
         </Card>
 
+        {/* Restaurant Image */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Restaurant Image</CardTitle>
+            <CardDescription>
+              Upload a photo of your restaurant to attract more customers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ImageUpload
+              onImageUpload={async (imageUrl) => {
+                try {
+                  const { error } = await supabase
+                    .from('restaurants')
+                    .update({ image_url: imageUrl })
+                    .eq('id', restaurant.id);
+
+                  if (error) throw error;
+
+                  setRestaurant({ ...restaurant, image_url: imageUrl });
+                  toast({
+                    title: "Restaurant Image Updated",
+                    description: "Your restaurant image has been updated successfully.",
+                  });
+                } catch (error) {
+                  toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Failed to update restaurant image.",
+                  });
+                }
+              }}
+              currentImage={restaurant.image_url}
+              label="Restaurant Photo"
+              maxSize={10}
+            />
+          </CardContent>
+        </Card>
+
         {/* Menu Items */}
         <Card>
           <CardHeader>
@@ -400,6 +444,12 @@ const VendorMenu = () => {
                       />
                       <Label htmlFor="vegetarian">Vegetarian</Label>
                     </div>
+                    <ImageUpload
+                      onImageUpload={(imageUrl) => setNewItem({ ...newItem, image_url: imageUrl })}
+                      currentImage={newItem.image_url}
+                      label="Food Image"
+                      maxSize={5}
+                    />
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -430,6 +480,15 @@ const VendorMenu = () => {
                   <Card key={item.id} className={`border-l-4 ${item.is_available ? 'border-l-green-fresh' : 'border-l-gray-400'}`}>
                     <CardContent className="pt-6">
                       <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                        {item.image_url && (
+                          <div className="w-full sm:w-32 h-32 flex-shrink-0">
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
                             <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
