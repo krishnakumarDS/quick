@@ -388,35 +388,35 @@ const CustomerHome = () => {
   
   const categories = [{
     name: 'Specials',
-    emoji: '⭐',
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop&auto=format',
     color: 'from-orange-400 to-red-400'
   }, {
     name: 'Parotta',
-    emoji: '🫓',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop&auto=format',
     color: 'from-yellow-400 to-orange-400'
   }, {
     name: 'Shawarma',
-    emoji: '🌯',
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop&auto=format',
     color: 'from-green-400 to-teal-400'
   }, {
     name: 'Pizzas',
-    emoji: '🍕',
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop&auto=format',
     color: 'from-red-400 to-pink-400'
   }, {
     name: 'Idli',
-    emoji: '🍚',
+    image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&h=200&fit=crop&auto=format',
     color: 'from-blue-400 to-cyan-400'
   }, {
     name: 'Biryani',
-    emoji: '🍛',
+    image: 'https://images.unsplash.com/photo-1599043513900-9466d0404437?w=200&h=200&fit=crop&auto=format',
     color: 'from-purple-400 to-pink-400'
   }, {
     name: 'Burgers',
-    emoji: '🍔',
+    image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=200&h=200&fit=crop&auto=format',
     color: 'from-orange-400 to-yellow-400'
   }, {
     name: 'Chinese',
-    emoji: '🥡',
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=200&h=200&fit=crop&auto=format',
     color: 'from-red-500 to-orange-500'
   }];
   const filters = [{
@@ -629,8 +629,23 @@ const CustomerHome = () => {
           <div className="flex gap-6 min-w-max">
             {categories.map(category => <Link key={category.name} to="/customer/food">
                 <div className="flex flex-col items-center group cursor-pointer">
-                  <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-2 group-hover:scale-105 transition-transform shadow-md`}>
-                    <span className="text-5xl">{category.emoji}</span>
+                  <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-2 group-hover:scale-105 transition-transform shadow-md overflow-hidden relative`}>
+                    <img 
+                      src={category.image} 
+                      alt={category.name}
+                      className="w-full h-full object-cover rounded-2xl"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails
+                        e.currentTarget.style.display = 'none';
+                        const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (nextElement) {
+                          nextElement.style.display = 'flex';
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300" style={{ display: 'none' }}>
+                      <span className="text-5xl opacity-60">🍽️</span>
+                    </div>
                   </div>
                   <span className="text-sm font-medium text-foreground">{category.name}</span>
                 </div>
