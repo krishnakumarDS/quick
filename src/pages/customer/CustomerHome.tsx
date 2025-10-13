@@ -10,6 +10,8 @@ import UserMenu from '@/components/UserMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LocationService } from '@/services/LocationService';
 import { useToast } from '@/hooks/use-toast';
+import MapLocationPicker from '@/components/MapLocationPicker';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 const CustomerHome = () => {
   const {
     user
@@ -22,6 +24,7 @@ const CustomerHome = () => {
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showMapDialog, setShowMapDialog] = useState(false);
   
   useEffect(() => {
     fetchRestaurants();
@@ -122,34 +125,70 @@ const CustomerHome = () => {
         console.error('IP location also failed:', ipError);
       }
       
-      // Final fallback: Set a default location message
-      console.log('All location methods failed, showing manual entry option');
-      setAddress(''); // Clear any existing address
-      
-      // Provide specific error messages based on error type
-      let errorTitle = "Location Detection Failed";
-      let errorDescription = "Could not automatically detect your location. Please enter your address manually.";
-      
-      if (error.code === 1) { // PERMISSION_DENIED
-        errorTitle = "Location Permission Required";
-        errorDescription = `Please allow location access in your browser settings. ${LocationService.getLocationInstructions()}`;
-      } else if (error.code === 2) { // POSITION_UNAVAILABLE
-        errorTitle = "Location Services Unavailable";
-        errorDescription = "Unable to determine your location. This could be due to:\n• GPS/Location services being disabled\n• Poor GPS signal (try moving to a window or outdoors)\n• Network connectivity issues\n• Browser location service restrictions\n\nPlease enter your address manually or try again later.";
-      } else if (error.code === 3) { // TIMEOUT
-        errorTitle = "Location Request Timeout";
-        errorDescription = "Location request took too long. Please try again or enter your address manually.";
-      } else if (error.message) {
-        errorDescription = error.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: errorTitle,
-        description: errorDescription,
-      });
+        // Final fallback: Show map picker dialog
+        console.log('All location methods failed, showing map picker');
+        setShowMapDialog(true);
+
+        // Provide specific error messages based on error type
+        let errorTitle = "Location Detection Failed";
+        let errorDescription = "Could not automatically detect your location. Please select your location on the map below.";
+
+        if (error.code === 1) { // PERMISSION_DENIED
+          errorTitle = "Location Permission Required";
+          errorDescription = `Please allow location access in your browser settings. ${LocationService.getLocationInstructions()}`;
+        } else if (error.code === 2) { // POSITION_UNAVAILABLE
+          errorTitle = "Location Services Unavailable";
+          errorDescription = "Unable to determine your location. Please select your location on the map below.";
+        } else if (error.code === 3) { // TIMEOUT
+          errorTitle = "Location Request Timeout";
+          errorDescription = "Location request took too long. Please select your location on the map below.";
+        } else if (error.message) {
+          errorDescription = error.message;
+        }
+
+        toast({
+          variant: "destructive",
+          title: errorTitle,
+          description: errorDescription,
+        });
     } finally {
       setIsGettingLocation(false);
+    }
+  };
+
+  const handleMapLocationSelect = async (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => {
+    try {
+      setAddress(location.address);
+
+      // Save to database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          address: location.address,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setShowMapDialog(false);
+
+      toast({
+        title: "Location Updated",
+        description: `Your location has been set to: ${location.address}`,
+      });
+    } catch (error) {
+      console.error('Error saving location:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save location. Please try again.",
+      });
     }
   };
   const fetchRestaurants = async () => {
@@ -497,6 +536,22 @@ const CustomerHome = () => {
           </Link>
         </div>
       </nav>
+
+      {/* Map Location Picker Dialog */}
+      <Dialog open={showMapDialog} onOpenChange={setShowMapDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Your Location</DialogTitle>
+            <DialogDescription>
+              Choose your delivery location on the map below. You can drag the marker to adjust the exact position.
+            </DialogDescription>
+          </DialogHeader>
+          <MapLocationPicker
+            onLocationSelect={handleMapLocationSelect}
+            className="w-full"
+          />
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default CustomerHome;

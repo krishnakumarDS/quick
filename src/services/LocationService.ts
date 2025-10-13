@@ -51,10 +51,41 @@ export class LocationService {
   }
 
   /**
-   * Fallback reverse geocoding using a free service
+   * Fallback reverse geocoding using free services (Nominatim + BigDataCloud)
    */
   private static async fallbackReverseGeocode(latitude: number, longitude: number): Promise<LocationData | null> {
     try {
+      // Try Nominatim (OpenStreetMap) first - more accurate and free
+      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+      
+      try {
+        const nominatimResponse = await fetch(nominatimUrl, {
+          headers: {
+            'User-Agent': 'RapidDishNetwork/1.0',
+          },
+        });
+        
+        if (nominatimResponse.ok) {
+          const nominatimData = await nominatimResponse.json();
+          
+          if (nominatimData.display_name) {
+            const components = nominatimData.address || {};
+            
+            return {
+              address: nominatimData.display_name,
+              city: components.city || components.town || components.village || '',
+              state: components.state || components.province || '',
+              country: components.country || '',
+              postalCode: components.postcode || '',
+              formattedAddress: nominatimData.display_name,
+            };
+          }
+        }
+      } catch (nominatimError) {
+        console.log('Nominatim failed, trying BigDataCloud...', nominatimError);
+      }
+      
+      // Fallback to BigDataCloud
       const response = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
       );
