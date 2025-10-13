@@ -199,7 +199,154 @@ const CustomerHome = () => {
         ascending: false
       });
       if (error) throw error;
-      setRestaurants(data || []);
+      
+      // Add sample restaurants with images if no restaurants exist
+      let restaurantsData = data || [];
+      
+      if (restaurantsData.length === 0) {
+        restaurantsData = [
+          {
+            id: 'sample-1',
+            name: 'Spice Garden',
+            category: 'Indian Cuisine',
+            rating: 4.5,
+            image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '123 Main Street, Coimbatore',
+            closing_time: '23:00',
+            commission_rate: 0.1,
+            created_at: new Date().toISOString(),
+            delivery_radius: 5,
+            description: 'Authentic Indian cuisine',
+            email: 'spicegarden@example.com',
+            opening_time: '10:00',
+            owner_id: 'sample-owner-1',
+            phone: '+91 9876543210',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 150
+          },
+          {
+            id: 'sample-2',
+            name: 'Pizza Corner',
+            category: 'Italian',
+            rating: 4.3,
+            image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '456 Park Avenue, Coimbatore',
+            closing_time: '22:30',
+            commission_rate: 0.12,
+            created_at: new Date().toISOString(),
+            delivery_radius: 4,
+            description: 'Fresh Italian pizzas',
+            email: 'pizzacorner@example.com',
+            opening_time: '11:00',
+            owner_id: 'sample-owner-2',
+            phone: '+91 9876543211',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 120
+          },
+          {
+            id: 'sample-3',
+            name: 'Burger Palace',
+            category: 'Fast Food',
+            rating: 4.2,
+            image_url: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '789 Central Road, Coimbatore',
+            closing_time: '23:30',
+            commission_rate: 0.08,
+            created_at: new Date().toISOString(),
+            delivery_radius: 6,
+            description: 'Juicy burgers and fries',
+            email: 'burgerpalace@example.com',
+            opening_time: '09:00',
+            owner_id: 'sample-owner-3',
+            phone: '+91 9876543212',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 200
+          },
+          {
+            id: 'sample-4',
+            name: 'Sushi Master',
+            category: 'Japanese',
+            rating: 4.7,
+            image_url: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '321 Garden Street, Coimbatore',
+            closing_time: '22:00',
+            commission_rate: 0.15,
+            created_at: new Date().toISOString(),
+            delivery_radius: 3,
+            description: 'Fresh sushi and Japanese cuisine',
+            email: 'sushimaster@example.com',
+            opening_time: '12:00',
+            owner_id: 'sample-owner-4',
+            phone: '+91 9876543213',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 85
+          },
+          {
+            id: 'sample-5',
+            name: 'Taco Fiesta',
+            category: 'Mexican',
+            rating: 4.1,
+            image_url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '654 Market Street, Coimbatore',
+            closing_time: '23:00',
+            commission_rate: 0.1,
+            created_at: new Date().toISOString(),
+            delivery_radius: 5,
+            description: 'Authentic Mexican tacos',
+            email: 'tacofiesta@example.com',
+            opening_time: '10:30',
+            owner_id: 'sample-owner-5',
+            phone: '+91 9876543214',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 95
+          },
+          {
+            id: 'sample-6',
+            name: 'Noodle House',
+            category: 'Chinese',
+            rating: 4.4,
+            image_url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop',
+            is_active: true,
+            is_approved: true,
+            address: '987 Food Court, Coimbatore',
+            closing_time: '22:30',
+            commission_rate: 0.11,
+            created_at: new Date().toISOString(),
+            delivery_radius: 4,
+            description: 'Delicious Chinese noodles',
+            email: 'noodlehouse@example.com',
+            opening_time: '11:30',
+            owner_id: 'sample-owner-6',
+            phone: '+91 9876543215',
+            updated_at: new Date().toISOString(),
+            latitude: 11.0168,
+            longitude: 76.9558,
+            total_reviews: 180
+          }
+        ];
+      }
+      
+      setRestaurants(restaurantsData);
     } catch (error) {
       console.error('Error fetching restaurants:', error);
     } finally {
@@ -418,8 +565,29 @@ const CustomerHome = () => {
                 </div>) : restaurants.slice(0, 6).map((restaurant, index) => <Link key={restaurant.id} to={`/customer/restaurant/${restaurant.id}`}>
                   <div className="w-56 group">
                     <div className="relative rounded-2xl overflow-hidden mb-2 h-40">
-                      <div className="w-full h-full bg-gradient-to-br from-orange-400/20 to-pink-400/20 flex items-center justify-center">
-                        <span className="text-6xl opacity-30">🍽️</span>
+                      {restaurant.image_url ? (
+                        <img 
+                          src={restaurant.image_url} 
+                          alt={restaurant.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextElement) {
+                              nextElement.style.display = 'flex';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="w-full h-full bg-gradient-to-br from-orange-400/20 to-pink-400/20 flex items-center justify-center"
+                        style={{ display: restaurant.image_url ? 'none' : 'flex' }}
+                      >
+                        <div className="text-center">
+                          <span className="text-6xl opacity-30 block mb-2">🍽️</span>
+                          <span className="text-xs text-gray-500 font-medium">{restaurant.name}</span>
+                        </div>
                       </div>
                       <button className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md hover:scale-110 transition-transform">
                         <Heart className="h-4 w-4 text-muted-foreground" />
@@ -496,9 +664,36 @@ const CustomerHome = () => {
         </div>
         <div className="overflow-x-auto">
           <div className="flex gap-4 min-w-max">
-            {[1, 2, 3, 4].map(i => <div key={i} className="w-40 h-40 rounded-2xl bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center">
-                <span className="text-6xl opacity-40">🍱</span>
-              </div>)}
+            {[
+              { id: 1, name: 'Chicken Biryani', image: 'https://images.unsplash.com/photo-1599043513900-9466d0404437?w=300&h=300&fit=crop' },
+              { id: 2, name: 'Butter Chicken', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=300&fit=crop' },
+              { id: 3, name: 'Paneer Tikka', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300&h=300&fit=crop' },
+              { id: 4, name: 'Dal Makhani', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=300&fit=crop' }
+            ].map(item => (
+              <div key={item.id} className="w-40 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center relative group cursor-pointer">
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) {
+                      nextElement.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div className="w-full h-full bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
+                  <span className="text-6xl opacity-40">🍱</span>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded text-center">
+                  {item.name}
+                </div>
+                <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                  ₹99
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
