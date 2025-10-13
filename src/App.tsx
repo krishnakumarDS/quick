@@ -19,6 +19,7 @@ import FoodList from "./pages/customer/FoodList";
 import CustomerOrders from "./pages/customer/CustomerOrders";
 import RestaurantDetails from "./pages/customer/RestaurantDetails";
 import Cart from "./pages/customer/Cart";
+import Profile from "./pages/customer/Profile";
 import VendorOrders from "./pages/vendor/VendorOrders";
 import VendorMenu from "./pages/vendor/VendorMenu";
 import DeliveryOrders from "./pages/delivery/DeliveryOrders";
@@ -67,6 +68,11 @@ const App = () => (
             <Route path="/customer/cart" element={
               <ProtectedRoute allowedRoles={['customer']}>
                 <Cart />
+              </ProtectedRoute>
+            } />
+            <Route path="/customer/profile" element={
+              <ProtectedRoute allowedRoles={['customer']}>
+                <Profile />
               </ProtectedRoute>
             } />
             
