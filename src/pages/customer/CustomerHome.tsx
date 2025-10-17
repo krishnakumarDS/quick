@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Search, Mic, Heart, Star, ChevronDown, User, Home, UtensilsCrossed, ShoppingBag, Navigation } from 'lucide-react';
+import { MapPin, Search, Mic, Heart, Star, ChevronDown, User, Home, UtensilsCrossed, ShoppingBag, Navigation, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LocationService } from '@/services/LocationService';
 import { useToast } from '@/hooks/use-toast';
 import MapLocationPicker from '@/components/MapLocationPicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 const CustomerHome = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const { cartItems, clearCart } = useCart();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +25,8 @@ const CustomerHome = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showMapDialog, setShowMapDialog] = useState(false);
+  const [showCartPopup, setShowCartPopup] = useState(false);
+  const [showCartBottomPopup, setShowCartBottomPopup] = useState(true);
   
   useEffect(() => {
     fetchRestaurants();
@@ -37,6 +40,18 @@ const CustomerHome = () => {
     window.addEventListener('profileUpdated', handleProfileUpdate);
     return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, [user]);
+
+  // Show cart popup if user has items in cart when they visit home page
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      // Small delay to ensure page is loaded
+      const timer = setTimeout(() => {
+        setShowCartPopup(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cartItems.length]);
   
   const fetchAddress = async () => {
     if (!user) return;
@@ -388,7 +403,7 @@ const CustomerHome = () => {
   
   const categories = [{
     name: 'Specials',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop&auto=format',
+    image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=200&h=200&fit=crop&auto=format',
     color: 'from-orange-400 to-red-400'
   }, {
     name: 'Parotta',
@@ -396,7 +411,7 @@ const CustomerHome = () => {
     color: 'from-yellow-400 to-orange-400'
   }, {
     name: 'Shawarma',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop&auto=format',
+    image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&h=200&fit=crop&auto=format',
     color: 'from-green-400 to-teal-400'
   }, {
     name: 'Pizzas',
@@ -406,11 +421,7 @@ const CustomerHome = () => {
     name: 'Idli',
     image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&h=200&fit=crop&auto=format',
     color: 'from-blue-400 to-cyan-400'
-  }, {
-    name: 'Biryani',
-    image: 'https://images.unsplash.com/photo-1599043513900-9466d0404437?w=200&h=200&fit=crop&auto=format',
-    color: 'from-purple-400 to-pink-400'
-  }, {
+  },  {
     name: 'Burgers',
     image: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=200&h=200&fit=crop&auto=format',
     color: 'from-orange-400 to-yellow-400'
@@ -523,25 +534,24 @@ const CustomerHome = () => {
         </div>
       </header>
 
-      {/* Promotional Banner */}
-      <section className="bg-gradient-to-br from-cyan-400 to-blue-500 -mt-4 rounded-t-3xl px-4 pt-6 pb-8">
-        <div className="bg-white/95 rounded-2xl p-6 text-center relative overflow-hidden">
-          <div className="absolute -left-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-            
-            
+      {/* Image 1 Section */}
+      <section className="px-4 py-6 mb-6">
+        <div className="rounded-2xl overflow-hidden">
+          <img 
+            src="/image1.jpg" 
+            alt="Promotional Banner"
+            className="w-full h-auto object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+              if (nextElement) {
+                nextElement.style.display = 'flex';
+              }
+            }}
+          />
+          <div className="w-full h-48 bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center" style={{ display: 'none' }}>
+            <span className="text-6xl opacity-40">🍽️</span>
           </div>
-          <div className="absolute -right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-            
-            
-          </div>
-          
-          <h2 className="text-3xl font-extrabold text-foreground mb-2">
-            Meals at just <span className="text-orange-primary">₹99</span>
-          </h2>
-          <p className="text-muted-foreground mb-4">from your favorite brands</p>
-          <Button className="bg-orange-primary hover:bg-orange-primary/90 text-white font-bold rounded-full px-8">
-            ORDER NOW
-          </Button>
         </div>
       </section>
 
@@ -655,41 +665,76 @@ const CustomerHome = () => {
       </section>
 
       {/* 99 Store Section */}
-      <section className="px-4 py-6 bg-gradient-to-br from-cyan-50 to-blue-50 mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-yellow-400 text-black font-black text-xl px-2 py-1 rounded-lg transform -rotate-2">
-              99
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">store</h2>
-          </div>
-          <Link to="/customer/food">
-            <Button variant="ghost" className="text-orange-primary font-semibold">
-              See All →
-            </Button>
-          </Link>
-        </div>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="bg-black text-white p-1 rounded-full">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <section className="px-4 py-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl mx-4 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div>
+               <h2 className="text-xl font-bold text-foreground">Available Offers</h2>
+              <div className="flex items-center gap-2">
+                <div className="bg-green-500 text-white p-1 rounded-full">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
             </svg>
           </div>
           <p className="text-sm font-medium text-foreground">Meals at ₹99 + Free Delivery</p>
         </div>
+            </div>
+          </div>
+          <Link to="/customer/food" className="text-orange-primary font-semibold text-sm">
+            See All &gt;
+          </Link>
+        </div>
+        
         <div className="overflow-x-auto">
-          <div className="flex gap-4 min-w-max">
+          <div className="flex gap-4 min-w-max pb-2">
             {[
-              { id: 1, name: 'Chicken Biryani', image: 'https://images.unsplash.com/photo-1599043513900-9466d0404437?w=300&h=300&fit=crop' },
-              { id: 2, name: 'Butter Chicken', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=300&fit=crop' },
-              { id: 3, name: 'Paneer Tikka', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300&h=300&fit=crop' },
-              { id: 4, name: 'Dal Makhani', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=300&fit=crop' }
+              { 
+                id: 1, 
+                name: 'Chicken Fried Rice', 
+                image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=200&h=200&fit=crop',
+                price: 99,
+                originalPrice: null,
+                isVeg: false
+              },
+              { 
+                id: 2, 
+                name: 'White Idiyappam', 
+                image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop',
+                price: 99,
+                originalPrice: null,
+                isVeg: true
+              },
+              { 
+                id: 3, 
+                name: 'Dosa', 
+                image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&h=200&fit=crop',
+                price: 69,
+                originalPrice: 90,
+                isVeg: true
+              },
+              { 
+                id: 4, 
+                name: 'Butter Chicken', 
+                image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop',
+                price: 99,
+                originalPrice: null,
+                isVeg: false
+              },
+              { 
+                id: 5, 
+                name: 'Paneer Tikka', 
+                image: 'https://images.unsplash.com/photo-1609501676725-7186f3a0b0c0?w=200&h=200&fit=crop',
+                price: 99,
+                originalPrice: null,
+                isVeg: true
+              }
             ].map(item => (
-              <div key={item.id} className="w-40 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center relative group cursor-pointer">
+              <div key={item.id} className="w-32 flex-shrink-0 bg-white rounded-xl shadow-sm border relative group cursor-pointer hover:shadow-md transition-shadow">
+                <div className="relative">
                 <img 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover"
+                    className="w-full h-24 object-cover rounded-t-xl"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -698,14 +743,39 @@ const CustomerHome = () => {
                     }
                   }}
                 />
-                <div className="w-full h-full bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center absolute inset-0" style={{ display: 'none' }}>
-                  <span className="text-6xl opacity-40">🍱</span>
+                  <div className="w-full h-24 bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center rounded-t-xl absolute inset-0" style={{ display: 'none' }}>
+                    <span className="text-3xl opacity-40">🍱</span>
+                  </div>
+                  
+                  {/* Plus Button */}
+                  <button className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-green-600 transition-colors">
+                    +
+                  </button>
+                  
+                  {/* Veg/Non-Veg Indicator */}
+                  <div className="absolute top-2 left-2">
+                    <div className={`w-3 h-3 rounded-full border-2 border-white ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`}>
+                      {item.isVeg ? (
+                        <div className="w-1 h-1 bg-white rounded-full mx-auto mt-0.5"></div>
+                      ) : (
+                        <div className="w-1 h-1 bg-white rounded-full mx-auto mt-0.5"></div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded text-center">
-                  {item.name}
+                
+                <div className="p-2">
+                  <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-1">{item.name}</h3>
+                  <div className="flex items-center gap-1">
+                    {item.originalPrice ? (
+                      <>
+                        <span className="text-xs text-muted-foreground line-through">₹{item.originalPrice}</span>
+                        <span className="text-sm font-bold text-orange-primary">₹{item.price}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm font-bold text-orange-primary">₹{item.price}</span>
+                    )}
                 </div>
-                <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
-                  ₹99
                 </div>
               </div>
             ))}
@@ -713,37 +783,136 @@ const CustomerHome = () => {
         </div>
       </section>
 
+      {/* Image 2 Section */}
+      <section className="px-4 py-6 mb-6">
+        <div className="rounded-2xl overflow-hidden">
+          <img 
+            src="/image2.jpg" 
+            alt="Promotional Banner 2"
+            className="w-full h-auto object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+              if (nextElement) {
+                nextElement.style.display = 'flex';
+              }
+            }}
+          />
+          <div className="w-full h-48 bg-gradient-to-br from-blue-400/30 to-purple-400/30 flex items-center justify-center" style={{ display: 'none' }}>
+            <span className="text-6xl opacity-40">🎉</span>
+          </div>
+        </div>
+      </section>
+
       {/* All Restaurants */}
       <section className="px-4 py-6">
         <h2 className="text-2xl font-bold text-foreground mb-4">All Restaurants</h2>
-        <Link to="/customer/food">
-          <Button className="w-full bg-orange-primary hover:bg-orange-primary/90 text-white font-bold py-6 rounded-xl">
-            View All Restaurants
-          </Button>
+        
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-4 shadow-sm border">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-16 h-16 rounded-lg" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24 mb-1" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-6 w-12" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {restaurants.map((restaurant) => (
+              <Link 
+                key={restaurant.id} 
+                to={`/customer/restaurant/${restaurant.id}`}
+                className="block bg-white rounded-xl p-4 shadow-sm border hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                    <img 
+                      src={restaurant.image_url} 
+                      alt={restaurant.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (nextElement) {
+                          nextElement.style.display = 'flex';
+                        }
+                      }}
+                    />
+                    <div className="w-full h-full bg-gradient-to-br from-orange-400/30 to-pink-400/30 flex items-center justify-center" style={{ display: 'none' }}>
+                      <span className="text-2xl opacity-40">🍽️</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground text-lg mb-1">{restaurant.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-1">{restaurant.category}</p>
+                    <p className="text-xs text-muted-foreground">{restaurant.address}</p>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="font-semibold text-foreground">{restaurant.rating}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{restaurant.total_reviews} reviews</p>
+                  </div>
+                </div>
         </Link>
+            ))}
+            
+            {restaurants.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🍽️</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No restaurants available</h3>
+                <p className="text-muted-foreground">Check back later for new restaurants!</p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
+      {/* Cart Popup */}
+      {cartItems.length > 0 && showCartBottomPopup && <div className="fixed bottom-20 left-4 right-4 bg-green-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-lg z-50">
+          <div className="flex items-center justify-between">
+            {/* Left side - Cart items info */}
+            <div className="flex-1">
+              <p className="font-bold text-base sm:text-lg">{cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0)} items in cart</p>
+              <p className="text-xs sm:text-sm opacity-90">Continue shopping or view cart</p>
+            </div>
+            
+            {/* Right side - Close button and View Cart button */}
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => setShowCartBottomPopup(false)}
+                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Link to="/customer/cart">
+                <Button 
+                  size="sm" 
+                  className="bg-white text-green-500 hover:bg-white/90 font-bold text-xs sm:text-sm"
+                >
+                  VIEW CART
+                  <ShoppingBag className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>}
+
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
-        <div className="flex items-center justify-around py-3">
-          <Link to="/customer/food" className="flex flex-col items-center gap-1 text-orange-primary">
-            <UtensilsCrossed className="h-5 w-5" />
-            <span className="text-xs font-semibold">Food</span>
-          </Link>
-          <Link to="/customer/food" className="flex flex-col items-center gap-1 text-muted-foreground">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="text-xs">99 store</span>
-          </Link>
-          <Link to="/customer/orders" className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Star className="h-5 w-5" />
-            <span className="text-xs">Orders</span>
-          </Link>
-          <Link to="/customer/profile" className="flex flex-col items-center gap-1 text-muted-foreground">
-            <User className="h-5 w-5" />
-            <span className="text-xs">Profile</span>
-          </Link>
-        </div>
-      </nav>
+      <CustomerBottomNavigation />
 
       {/* Map Location Picker Dialog */}
       <Dialog open={showMapDialog} onOpenChange={setShowMapDialog}>

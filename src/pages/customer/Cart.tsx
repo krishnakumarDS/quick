@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { LocationService } from '@/services/LocationService';
 import MapLocationPicker from '@/components/MapLocationPicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 
 interface CartItem {
   id: string;
@@ -27,7 +29,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart();
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,16 +37,8 @@ const Cart = () => {
   const [showMapDialog, setShowMapDialog] = useState(false);
 
   useEffect(() => {
-    loadCart();
     loadUserAddress();
   }, []);
-
-  const loadCart = () => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-  };
 
   const loadUserAddress = async () => {
     if (!user) return;
@@ -190,31 +184,23 @@ const Cart = () => {
     }
   };
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(prev => {
-      const updated = prev.map(item => 
-        item.id === id 
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      );
-      localStorage.setItem('cart', JSON.stringify(updated));
-      return updated;
-    });
+  const handleUpdateQuantity = (id: string, delta: number) => {
+    const item = cartItems.find(item => item.id === id);
+    if (item) {
+      const newQuantity = Math.max(1, item.quantity + delta);
+      updateQuantity(id, newQuantity);
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(prev => {
-      const updated = prev.filter(item => item.id !== id);
-      localStorage.setItem('cart', JSON.stringify(updated));
-      return updated;
-    });
+  const handleRemoveItem = (id: string) => {
+    removeFromCart(id);
     toast({
       title: "Item removed",
       description: "Item has been removed from your cart"
     });
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = getTotalPrice();
   const deliveryFee = subtotal > 0 ? 40 : 0;
   const taxAmount = subtotal * 0.05; // 5% tax
   const total = subtotal + deliveryFee + taxAmount;
@@ -289,8 +275,7 @@ const Cart = () => {
       if (itemsError) throw itemsError;
 
       // Clear cart
-      localStorage.removeItem('cart');
-      setCartItems([]);
+      clearCart();
 
       toast({
         title: "Order placed successfully!",
@@ -355,7 +340,7 @@ const Cart = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.id, -1)}
+                          onClick={() => handleUpdateQuantity(item.id, -1)}
                           className="h-7 w-7 p-0"
                         >
                           <Minus className="h-3 w-3" />
@@ -364,7 +349,7 @@ const Cart = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={() => handleUpdateQuantity(item.id, 1)}
                           className="h-7 w-7 p-0"
                         >
                           <Plus className="h-3 w-3" />
@@ -372,7 +357,7 @@ const Cart = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="ml-auto text-red-500 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -494,6 +479,9 @@ const Cart = () => {
           </>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <CustomerBottomNavigation />
     </div>
   );
 };

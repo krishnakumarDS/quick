@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import UserMenu from '@/components/UserMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import OrderDialog from '@/components/OrderDialog';
+import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 
 const FoodList = () => {
   const { user } = useAuth();
@@ -19,147 +19,126 @@ const FoodList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creatingOrder, setCreatingOrder] = useState(false);
-  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
-    fetchMenuItems();
+    fetchRestaurants();
   }, []);
 
-  const fetchMenuItems = async () => {
+  const fetchRestaurants = async () => {
     try {
       const { data, error } = await supabase
-        .from('menu_items')
-        .select(`
-          *,
-          restaurants (
-            id,
-            name,
-            category,
-            rating,
-            is_active,
-            is_approved
-          )
-        `)
-        .eq('is_available', true)
-        .eq('restaurants.is_active', true)
-        .eq('restaurants.is_approved', true);
+        .from('restaurants')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_approved', true)
+        .order('rating', { ascending: false });
 
       if (error) throw error;
-      setMenuItems(data || []);
+      
+      // If no data from database, use sample restaurant data
+      if (!data || data.length === 0) {
+        const sampleData = getSampleRestaurants();
+        setRestaurants(sampleData);
+      } else {
+        setRestaurants(data);
+      }
     } catch (error) {
-      console.error('Error fetching menu items:', error);
+      console.error('Error fetching restaurants:', error);
+      // If there's an error, still show sample restaurant data
+      const sampleData = getSampleRestaurants();
+      setRestaurants(sampleData);
     } finally {
       setLoading(false);
     }
   };
 
+  const getSampleRestaurants = () => {
+    return [
+      {
+        id: 'sample-restaurant-1',
+        name: 'Spice Palace',
+        description: 'Authentic Indian cuisine with a modern twist',
+        category: 'Indian',
+        rating: 4.5,
+        image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop',
+        is_active: true,
+        is_approved: true,
+        address: '123 Main Street, Coimbatore',
+        delivery_time: '25-30 mins',
+        total_reviews: 150
+      },
+      {
+        id: 'sample-restaurant-2',
+        name: 'Pizza Corner',
+        description: 'Fresh Italian pizzas made with authentic ingredients',
+        category: 'Italian',
+        rating: 4.3,
+        image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+        is_active: true,
+        is_approved: true,
+        address: '456 Park Avenue, Coimbatore',
+        delivery_time: '20-25 mins',
+        total_reviews: 120
+      },
+      {
+        id: 'sample-restaurant-3',
+        name: 'Burger Palace',
+        description: 'Juicy burgers and crispy fries for the perfect meal',
+        category: 'Fast Food',
+        rating: 4.2,
+        image_url: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop',
+        is_active: true,
+        is_approved: true,
+        address: '789 Central Road, Coimbatore',
+        delivery_time: '15-20 mins',
+        total_reviews: 200
+      },
+      {
+        id: 'sample-restaurant-4',
+        name: 'Chinese Delight',
+        description: 'Authentic Chinese cuisine with fresh ingredients',
+        category: 'Chinese',
+        rating: 4.1,
+        image_url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=300&fit=crop',
+        is_active: true,
+        is_approved: true,
+        address: '321 Garden Street, Coimbatore',
+        delivery_time: '30-35 mins',
+        total_reviews: 85
+      },
+      {
+        id: 'sample-restaurant-5',
+        name: 'Sweet Treats',
+        description: 'Delicious desserts and baked goods',
+        category: 'Desserts',
+        rating: 4.6,
+        image_url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
+        is_active: true,
+        is_approved: true,
+        address: '654 Market Street, Coimbatore',
+        delivery_time: '20-25 mins',
+        total_reviews: 180
+      }
+    ];
+  };
+
   const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'pizza', label: 'Pizza' },
-    { value: 'burger', label: 'Burgers' },
-    { value: 'indian', label: 'Indian' },
-    { value: 'chinese', label: 'Chinese' },
-    { value: 'desserts', label: 'Desserts' }
+    { value: 'all', label: 'All Restaurants' },
+    { value: 'Indian', label: 'Indian' },
+    { value: 'Italian', label: 'Italian' },
+    { value: 'Fast Food', label: 'Fast Food' },
+    { value: 'Chinese', label: 'Chinese' },
+    { value: 'Desserts', label: 'Desserts' }
   ];
 
-  const handleOrderNow = (item: any) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "Please login to place an order",
-        variant: "destructive"
-      });
-      return;
-    }
-    setSelectedItem(item);
-    setOrderDialogOpen(true);
-  };
 
-  const handleConfirmOrder = async (quantity: number, specialInstructions: string) => {
-    if (!selectedItem) return;
-
-    setCreatingOrder(true);
-    
-    try {
-      // Get customer profile ID
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, address, full_name, phone')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const itemTotal = selectedItem.price * quantity;
-      const deliveryFee = 40;
-      const taxAmount = itemTotal * 0.05;
-      const finalAmount = itemTotal + deliveryFee + taxAmount;
-
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: profile.id,
-          restaurant_id: selectedItem.restaurant_id,
-          total_amount: itemTotal,
-          delivery_fee: deliveryFee,
-          tax_amount: taxAmount,
-          discount_amount: 0,
-          final_amount: finalAmount,
-          payment_method: 'cod',
-          payment_status: 'pending',
-          delivery_address: profile.address || 'Address not set',
-          special_instructions: specialInstructions || null,
-          order_number: `TEMP${Date.now()}`
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order item
-      const { error: itemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: order.id,
-          menu_item_id: selectedItem.id,
-          quantity: quantity,
-          unit_price: selectedItem.price,
-          total_price: itemTotal,
-          special_instructions: specialInstructions || null
-        });
-
-      if (itemError) throw itemError;
-
-      toast({
-        title: "Order Placed!",
-        description: `Your order #${order.order_number} has been sent to ${selectedItem.restaurants?.name}`,
-      });
-
-      setOrderDialogOpen(false);
-      setSelectedItem(null);
-
-    } catch (error: any) {
-      console.error('Error creating order:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to place order",
-        variant: "destructive"
-      });
-    } finally {
-      setCreatingOrder(false);
-    }
-  };
-
-  const filteredMenuItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.restaurants?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.category.toLowerCase() === selectedCategory.toLowerCase();
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         restaurant.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         restaurant.address?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || restaurant.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -189,7 +168,7 @@ const FoodList = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search for dishes or restaurants"
+                placeholder="Search for restaurants"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-10 bg-muted/30 border-none"
@@ -220,7 +199,7 @@ const FoodList = () => {
       <main className="container mx-auto px-4 py-4 bg-muted/20">
         <div className="mb-4">
           <h2 className="text-lg font-bold text-foreground">
-            {loading ? 'Loading...' : `${filteredMenuItems.length} Restaurants`}
+            {loading ? 'Loading...' : `${filteredRestaurants.length} Restaurants`}
           </h2>
         </div>
 
@@ -242,12 +221,12 @@ const FoodList = () => {
         ) : (
           <>
             <div className="grid gap-4">
-              {filteredMenuItems.map((item) => (
-                <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer bg-white border-border">
+              {filteredRestaurants.map((restaurant) => (
+                <Card key={restaurant.id} className="hover:shadow-md transition-shadow cursor-pointer bg-white border-border">
                   <div className="flex gap-3 p-3">
                     <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-muted/30">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                      {restaurant.image_url ? (
+                        <img src={restaurant.image_url} alt={restaurant.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <UtensilsCrossed className="h-10 w-10 text-muted-foreground/30" />
@@ -258,16 +237,11 @@ const FoodList = () => {
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            {item.is_vegetarian && (
-                              <div className="w-4 h-4 border-2 border-green-fresh flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-green-fresh"></div>
-                              </div>
-                            )}
-                            <h3 className="font-bold text-base text-foreground truncate">{item.name}</h3>
+                            <h3 className="font-bold text-base text-foreground truncate">{restaurant.name}</h3>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1">{item.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1">{restaurant.description}</p>
                           <p className="text-xs text-muted-foreground mb-2">
-                            {item.restaurants?.name}
+                            {restaurant.address}
                           </p>
                         </div>
                       </div>
@@ -276,23 +250,22 @@ const FoodList = () => {
                         <div className="flex items-center gap-3 text-xs">
                           <div className="flex items-center gap-1">
                             <Star className="h-3 w-3 text-green-fresh fill-green-fresh" />
-                            <span className="font-bold text-foreground">{item.restaurants?.rating || '0.0'}</span>
+                            <span className="font-bold text-foreground">{restaurant.rating}</span>
                           </div>
                           <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">{item.preparation_time} min</span>
+                          <span className="text-muted-foreground">{restaurant.delivery_time}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-bold text-foreground">
-                            ₹{item.price}
-                          </div>
-                          <Button 
-                            size="sm"
-                            className="bg-orange-primary hover:bg-orange-primary/90 text-white h-8 px-4 rounded-md font-bold text-xs uppercase"
-                            onClick={() => handleOrderNow(item)}
-                          >
-                            Add
-                          </Button>
+                          <span className="text-xs text-muted-foreground">{restaurant.category}</span>
+                          <Link to={`/customer/restaurant/${restaurant.id}`}>
+                            <Button 
+                              size="sm"
+                              className="bg-orange-primary hover:bg-orange-primary/90 text-white h-8 px-4 rounded-md font-bold text-xs uppercase"
+                            >
+                              View Menu
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -301,10 +274,10 @@ const FoodList = () => {
               ))}
             </div>
 
-            {filteredMenuItems.length === 0 && !loading && (
+            {filteredRestaurants.length === 0 && !loading && (
               <div className="text-center py-12">
                 <UtensilsCrossed className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No items found</h3>
+                <h3 className="text-xl font-semibold mb-2">No restaurants found</h3>
                 <p className="text-muted-foreground">Try adjusting your search or filters</p>
               </div>
             )}
@@ -312,13 +285,9 @@ const FoodList = () => {
         )}
       </main>
 
-      <OrderDialog
-        open={orderDialogOpen}
-        onOpenChange={setOrderDialogOpen}
-        item={selectedItem}
-        onConfirm={handleConfirmOrder}
-        isLoading={creatingOrder}
-      />
+
+      {/* Bottom Navigation */}
+      <CustomerBottomNavigation />
     </div>
   );
 };

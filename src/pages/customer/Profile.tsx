@@ -11,6 +11,7 @@ import { LocationService } from '@/services/LocationService';
 import { useToast } from '@/hooks/use-toast';
 import MapLocationPicker from '@/components/MapLocationPicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -394,6 +395,9 @@ const Profile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Bottom Navigation */}
+      <CustomerBottomNavigation />
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { LocationService } from '@/services/LocationService';
 import { useToast } from '@/hooks/use-toast';
 import MapLocationPicker from '@/components/MapLocationPicker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import CartIcon from '@/components/CartIcon';
 
 const UserMenu = () => {
   const { signOut, user } = useAuth();
@@ -226,12 +227,14 @@ const UserMenu = () => {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative bg-white/20 hover:bg-white/30">
-          <User className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex items-center gap-2">
+      <CartIcon />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative bg-white/20 hover:bg-white/30">
+            <User className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-4 bg-white z-50">
         <div className="space-y-4">
           {/* Header */}
@@ -362,7 +365,8 @@ const UserMenu = () => {
           </Button>
         </div>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </div>
   );
 };
 

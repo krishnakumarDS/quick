@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Clock, Package, CheckCircle, Truck, ArrowLeft, Star, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 
 interface Order {
   id: string;
@@ -268,6 +269,9 @@ const CustomerOrders = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Bottom Navigation */}
+      <CustomerBottomNavigation />
     </div>
   );
 };
