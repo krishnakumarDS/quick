@@ -15,7 +15,7 @@ import CustomerBottomNavigation from '@/components/CustomerBottomNavigation';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -227,7 +227,23 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/');
+      // Redirect to role-specific login page based on current user role
+      switch (userRole) {
+        case 'customer':
+          navigate('/login/customer');
+          break;
+        case 'delivery_partner':
+          navigate('/login/delivery');
+          break;
+        case 'restaurant_owner':
+          navigate('/login/restaurant');
+          break;
+        case 'admin':
+          navigate('/login');
+          break;
+        default:
+          navigate('/login/customer');
+      }
     } catch (error) {
       console.error('Error logging out:', error);
     }

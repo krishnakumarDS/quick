@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Users, Store, Truck, Package, BarChart3, LogOut, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
   const stats = {
@@ -87,6 +89,27 @@ const AdminDashboard = () => {
     console.log(`${action} ${type} with id ${id}`);
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    // Redirect to role-specific login page based on current user role
+    switch (userRole) {
+      case 'customer':
+        navigate('/login/customer');
+        break;
+      case 'delivery_partner':
+        navigate('/login/delivery');
+        break;
+      case 'restaurant_owner':
+        navigate('/login/restaurant');
+        break;
+      case 'admin':
+        navigate('/login');
+        break;
+      default:
+        navigate('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -101,7 +124,7 @@ const AdminDashboard = () => {
               <span className="text-sm text-muted-foreground">
                 Welcome, Administrator
               </span>
-              <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 Logout
               </Button>

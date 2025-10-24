@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Store, Plus, Edit, Trash2, LogOut, Package, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ImageUpload';
 
@@ -36,7 +36,8 @@ interface Restaurant {
 }
 
 const VendorMenu = () => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -206,6 +207,27 @@ const VendorMenu = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    // Redirect to role-specific login page based on current user role
+    switch (userRole) {
+      case 'customer':
+        navigate('/login/customer');
+        break;
+      case 'delivery_partner':
+        navigate('/login/delivery');
+        break;
+      case 'restaurant_owner':
+        navigate('/login/restaurant');
+        break;
+      case 'admin':
+        navigate('/login');
+        break;
+      default:
+        navigate('/login/restaurant');
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -246,7 +268,7 @@ const VendorMenu = () => {
                   Welcome, <span className="font-medium text-foreground">{user?.email?.split('@')[0]}</span>
                 </span>
               </div>
-              <Button variant="glass" size="sm" onClick={signOut} className="gap-2 hover-lift">
+              <Button variant="glass" size="sm" onClick={handleLogout} className="gap-2 hover-lift">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>

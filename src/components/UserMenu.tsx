@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import CartIcon from '@/components/CartIcon';
 
 const UserMenu = () => {
-  const { signOut, user } = useAuth();
+  const { signOut, user, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
@@ -223,7 +223,23 @@ const UserMenu = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    // Redirect to role-specific login page based on current user role
+    switch (userRole) {
+      case 'customer':
+        navigate('/login/customer');
+        break;
+      case 'delivery_partner':
+        navigate('/login/delivery');
+        break;
+      case 'restaurant_owner':
+        navigate('/login/restaurant');
+        break;
+      case 'admin':
+        navigate('/login');
+        break;
+      default:
+        navigate('/login/customer');
+    }
   };
 
   return (
